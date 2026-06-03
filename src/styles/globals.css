@@ -1,0 +1,140 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;600;700;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+@import 'tailwindcss';
+
+@theme {
+  --font-bebas: 'Bebas Neue', sans-serif;
+  --font-outfit: 'Outfit', sans-serif;
+  --font-grotesk: 'Space Grotesk', sans-serif;
+
+  --color-manga-black: #000000;
+  --color-manga-white: #ffffff;
+  --color-manga-red: #ff2d2d;
+  --color-manga-red-dark: #cc1b1b;
+  --color-manga-gray-dark: #0a0a0a;
+  --color-manga-gray-medium: #1c1c1c;
+  --color-manga-gray-light: #a3a3a3;
+  --color-manga-gray-bright: #e5e5e5;
+  
+  --shadow-manga: 6px 6px 0px #ffffff;
+  --shadow-manga-black: 6px 6px 0px #000000;
+  --shadow-manga-red: 6px 6px 0px #ff2d2d;
+  --shadow-manga-hover: 8px 8px 0px #ff2d2d;
+}
+
+:root {
+  color-scheme: dark;
+  --background: #000000;
+  --foreground: #ffffff;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-grotesk);
+}
+
+html {
+  scroll-behavior: smooth;
+  background: #000000;
+  overflow-x: hidden;
+}
+
+body {
+  margin: 0;
+  background: #000000;
+  color: #ffffff;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #000000;
+  border-left: 2px solid #1c1c1c;
+}
+::-webkit-scrollbar-thumb {
+  background: #ff2d2d;
+  border: 1px solid #000000;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #ffffff;
+}
+
+::selection {
+  background: #ff2d2d;
+  color: #ffffff;
+}
+
+@layer utilities {
+  .halftone-bg {
+    background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1.5px, transparent 1.5px);
+    background-size: 14px 14px;
+  }
+  
+  .halftone-bg-red {
+    background-image: radial-gradient(rgba(255, 45, 45, 0.15) 1.5px, transparent 1.5px);
+    background-size: 12px 12px;
+  }
+
+  .speed-lines-bg {
+    background: repeating-linear-gradient(
+      45deg,
+      rgba(255, 255, 255, 0.02),
+      rgba(255, 255, 255, 0.02) 10px,
+      transparent 10px,
+      transparent 20px
+    );
+  }
+
+  .manga-panel {
+    border: 3px solid #ffffff;
+    background-color: #000000;
+    box-shadow: 6px 6px 0px #ffffff;
+    transition: all 0.2s ease-in-out;
+  }
+
+  .manga-panel:hover {
+    transform: translate(-3px, -3px);
+    box-shadow: 9px 9px 0px #ff2d2d;
+  }
+
+  .manga-panel-red {
+    border: 3px solid #ff2d2d;
+    background-color: #000000;
+    box-shadow: 6px 6px 0px #ffffff;
+    transition: all 0.2s ease-in-out;
+  }
+
+  .manga-panel-red:hover {
+    transform: translate(-3px, -3px);
+    box-shadow: 9px 9px 0px #ffffff;
+  }
+
+  .redacted {
+    background-color: #ffffff;
+    color: transparent;
+    cursor: help;
+    user-select: none;
+    transition: all 0.25s ease-in-out;
+    padding: 0 4px;
+  }
+
+  .redacted:hover {
+    background-color: transparent;
+    color: #ff2d2d;
+    user-select: auto;
+  }
+  
+  .skew-panel {
+    transform: skewX(-2deg);
+  }
+
+  /* Text Stroke for Manga Outlines */
+  .text-stroke-white {
+    -webkit-text-stroke: 1.5px #ffffff;
+    color: transparent;
+  }
+  .text-stroke-black {
+    -webkit-text-stroke: 1.5px #000000;
+    color: transparent;
+  }
+}
