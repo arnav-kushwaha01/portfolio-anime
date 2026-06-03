@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { fadeInUp, staggerContainer } from '@/features/animations/framer/variants'
 import { motionTransitions } from '@/features/animations/framer/transitions'
 import Image from 'next/image'
+import { Terminal, Briefcase, Globe, Mail } from 'lucide-react'
 
 export function AboutSection() {
   return (
@@ -78,41 +79,84 @@ export function AboutSection() {
             </div>
           </motion.div>
 
-          {/* Right Column: Character Portrait Frame */}
+          {/* Right Column: Character Portrait Frame (3D Flip Card) */}
           <motion.div
             variants={fadeInUp}
             transition={motionTransitions.smooth}
             className="lg:col-span-5 flex items-center justify-center w-full"
           >
-            <div className="w-full max-w-sm aspect-[4/5] bg-manga-gray-dark relative border-4 border-white shadow-[8px_8px_0px_#ff2d2d] skew-x-[-1deg] overflow-hidden group">
+            <div className="w-full max-w-sm aspect-[4/5] bg-transparent relative border-4 border-white shadow-[8px_8px_0px_#ff2d2d] skew-x-[-1deg] group [perspective:1000px]">
               
-              {/* Halftone / Screen Tone background */}
-              <div className="absolute inset-0 halftone-bg opacity-30 z-0 pointer-events-none" />
-              
-              {/* Speed lines in portrait panel */}
-              <div className="absolute inset-0 speed-lines-bg opacity-25 z-0 pointer-events-none" />
+              <div className="w-full h-full relative transition-transform duration-700 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
+                
+                {/* FRONT FACE (Profile Photo) */}
+                <div className="absolute inset-0 w-full h-full bg-manga-gray-dark overflow-hidden [backface-visibility:hidden]">
+                  {/* Halftone / Screen Tone background */}
+                  <div className="absolute inset-0 halftone-bg opacity-30 z-0 pointer-events-none" />
+                  
+                  {/* Speed lines in portrait panel */}
+                  <div className="absolute inset-0 speed-lines-bg opacity-25 z-0 pointer-events-none" />
 
-              {/* Character Image */}
-              <div className="relative w-full h-full z-10 transition-transform duration-500 group-hover:scale-105">
-                <Image
-                  src="/assets/images/manga_character_portrait.png"
-                  alt="Arnav Kushwaha Character Sketch"
-                  fill
-                  sizes="(max-width: 768px) 100vw, 380px"
-                  priority
-                  className="object-cover grayscale contrast-125 brightness-95"
-                />
+                  {/* Character Image */}
+                  <div className="relative w-full h-full z-10 transition-transform duration-500 group-hover:scale-105">
+                    <Image
+                      src="/assets/images/profile.jpg"
+                      alt="Arnav Kushwaha Character Sketch"
+                      fill
+                      sizes="(max-width: 768px) 100vw, 380px"
+                      priority
+                      className="object-cover contrast-110 brightness-110"
+                    />
+                    {/* Cyber overlay tint for aesthetic consistency */}
+                    <div className="absolute inset-0 bg-manga-red/5 mix-blend-color-burn pointer-events-none z-10" />
+                  </div>
+
+                  {/* Corner brackets */}
+                  <div className="absolute top-4 left-4 w-4 h-4 border-t-2 border-l-2 border-white z-20 pointer-events-none" />
+                  <div className="absolute top-4 right-4 w-4 h-4 border-t-2 border-r-2 border-white z-20 pointer-events-none" />
+                  <div className="absolute bottom-4 right-4 w-4 h-4 border-b-2 border-r-2 border-white z-20 pointer-events-none" />
+                </div>
+
+                {/* BACK FACE (Social Handles) */}
+                <div className="absolute inset-0 w-full h-full bg-black [backface-visibility:hidden] [transform:rotateY(180deg)] border-2 border-manga-red flex flex-col items-center justify-center p-8 overflow-hidden">
+                   {/* Cyberpunk circuit / grid background */}
+                   <div className="absolute inset-0 opacity-20 pointer-events-none"
+                     style={{
+                       backgroundImage: 'radial-gradient(circle at center, #ff2d2d 1px, transparent 1px)',
+                       backgroundSize: '20px 20px'
+                     }}
+                   />
+                   
+                   <h3 className="font-bebas text-3xl text-white tracking-widest mb-8 drop-shadow-[0_0_10px_#ff2d2d] z-10">
+                     COMM LINKS
+                   </h3>
+                   
+                   <div className="flex flex-col gap-4 w-full z-10">
+                      {[
+                        { name: 'GITHUB', icon: Terminal, url: 'https://github.com/arnav-kushwaha01', hoverBg: 'hover:bg-neutral-800' },
+                        { name: 'LINKEDIN', icon: Briefcase, url: 'https://linkedin.com/in/arnavkushwaha', hoverBg: 'hover:bg-blue-600' },
+                        { name: 'TWITTER / X', icon: Globe, url: 'https://twitter.com/arnavkushwaha', hoverBg: 'hover:bg-neutral-900' },
+                        { name: 'EMAIL', icon: Mail, url: 'mailto:contact@arnavkushwaha.com', hoverBg: 'hover:bg-manga-red' }
+                      ].map((social, idx) => (
+                        <a key={idx} href={social.url} target="_blank" rel="noopener noreferrer" 
+                           className={`group/btn relative flex items-center justify-between px-4 py-3 border-2 border-white bg-black transition-all duration-300 ${social.hoverBg} hover:scale-105 hover:-translate-y-1 shadow-[2px_2px_0px_#ff2d2d] hover:shadow-[4px_4px_0px_#ffffff]`}
+                        >
+                          <span className="font-bebas text-lg tracking-wider text-manga-gray-light group-hover/btn:text-white transition-colors">
+                            {social.name}
+                          </span>
+                          <social.icon className="w-5 h-5 text-manga-red group-hover/btn:text-white transition-colors group-hover/btn:scale-110" />
+                        </a>
+                      ))}
+                   </div>
+                </div>
+
               </div>
-
-              {/* Character Name Ribbon Badge overlay */}
+              
+              {/* Character Name Ribbon Badge overlay (Stays on top frame, doesn't flip) */}
               <div className="absolute bottom-4 left-4 z-20 bg-manga-red border-2 border-white px-4 py-1 text-black font-bebas text-lg tracking-widest skew-x-[-8deg] shadow-[2px_2px_0px_#fff]">
                 ARNAV KUSHWAHA
               </div>
 
-              {/* Corner brackets */}
-              <div className="absolute top-4 left-4 w-4 h-4 border-t-2 border-l-2 border-white z-20 pointer-events-none" />
-              <div className="absolute top-4 right-4 w-4 h-4 border-t-2 border-r-2 border-white z-20 pointer-events-none" />
-              <div className="absolute bottom-4 right-4 w-4 h-4 border-b-2 border-r-2 border-white z-20 pointer-events-none" />
             </div>
           </motion.div>
         </motion.div>
