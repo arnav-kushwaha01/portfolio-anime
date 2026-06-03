@@ -134,7 +134,7 @@ export function AboutSection() {
                    <div className="flex flex-col gap-5 w-full z-30">
                       {[
                         { name: 'GITHUB', icon: Terminal, url: 'https://github.com/arnav-kushwaha01', hoverBg: 'hover:bg-neutral-800' },
-                        { name: 'LINKEDIN', icon: Briefcase, url: 'https://linkedin.com/in/arnavkushwaha', hoverBg: 'hover:bg-blue-600' },
+                        { name: 'LINKEDIN', icon: Briefcase, url: 'https://www.linkedin.com/in/arnav-kushwaha-41608324a/', hoverBg: 'hover:bg-blue-600' },
                         { name: 'EMAIL', icon: Mail, url: 'mailto:contact@arnavkushwaha.com', hoverBg: 'hover:bg-manga-red' }
                       ].map((social, idx) => (
                         <a key={idx} href={social.url} target="_blank" rel="noopener noreferrer" 
