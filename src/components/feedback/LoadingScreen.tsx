@@ -20,8 +20,10 @@ export function LoadingScreen({ onComplete }: LoadingScreenProps) {
 
   // Automated Timeline Sequence
   useEffect(() => {
-    // 1. Start drop animation immediately
-    setIsReady(true)
+    // 1. Start drop animation after a tiny delay to trigger framer-motion mount
+    const readyTimer = setTimeout(() => {
+      setIsReady(true)
+    }, 50)
 
     // 2. Open the hatch automatically after the drop settles
     const hatchTimer = setTimeout(() => {
@@ -39,6 +41,7 @@ export function LoadingScreen({ onComplete }: LoadingScreenProps) {
     }, 3000)
 
     return () => {
+      clearTimeout(readyTimer)
       clearTimeout(hatchTimer)
       clearTimeout(flashTimer)
       clearTimeout(completeTimer)

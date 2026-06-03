@@ -16,13 +16,7 @@ interface TroikaTextMesh extends THREE.Mesh {
   material: THREE.Material
 }
 
-// List of skills to display when targets are slashed
-const SKILLS_LIST = [
-  'React', 'Next.js', 'Node.js', 'TypeScript',
-  'Python', 'MySQL', 'Git', 'Tailwind CSS',
-  'JavaScript', 'Pandas', 'NumPy', 'Express.js',
-  'Vite', 'HTML', 'CSS', 'GitHub', 'Postman'
-]
+
 
 export function SamuraiCoder({ position = [0, 0, 0], scale = 1.0 }: SamuraiCoderProps) {
   const groupRef = useRef<THREE.Group>(null)
@@ -345,7 +339,7 @@ export function SamuraiCoder({ position = [0, 0, 0], scale = 1.0 }: SamuraiCoder
             
             if (textRef.current.material && 'opacity' in textRef.current.material) {
               textRef.current.material.transparent = true
-              ;(textRef.current.material as any).opacity = Math.max(1 - timeSinceSlash * 1.2, 0)
+              ;(textRef.current.material as THREE.Material & { opacity: number }).opacity = Math.max(1 - timeSinceSlash * 1.2, 0)
             }
           }
         } else {
