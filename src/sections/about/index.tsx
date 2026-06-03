@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import { fadeInUp, staggerContainer } from '@/features/animations/framer/variants'
 import { motionTransitions } from '@/features/animations/framer/transitions'
 import Image from 'next/image'
-import { Terminal, Briefcase, Globe, Mail } from 'lucide-react'
+import { Terminal, Briefcase, Mail } from 'lucide-react'
 
 export function AboutSection() {
   return (
@@ -90,7 +90,7 @@ export function AboutSection() {
               <div className="w-full h-full relative transition-transform duration-700 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
                 
                 {/* FRONT FACE (Profile Photo) */}
-                <div className="absolute inset-0 w-full h-full bg-manga-gray-dark overflow-hidden [backface-visibility:hidden]">
+                <div className="absolute inset-0 w-full h-full bg-manga-gray-dark overflow-hidden [backface-visibility:hidden] z-10 pointer-events-auto group-hover:pointer-events-none">
                   {/* Halftone / Screen Tone background */}
                   <div className="absolute inset-0 halftone-bg opacity-30 z-0 pointer-events-none" />
                   
@@ -118,7 +118,7 @@ export function AboutSection() {
                 </div>
 
                 {/* BACK FACE (Social Handles) */}
-                <div className="absolute inset-0 w-full h-full bg-black [backface-visibility:hidden] [transform:rotateY(180deg)] border-2 border-manga-red flex flex-col items-center justify-center p-8 overflow-hidden">
+                <div className="absolute inset-0 w-full h-full bg-black [backface-visibility:hidden] [transform:rotateY(180deg)] border-2 border-manga-red flex flex-col items-center justify-center p-8 overflow-hidden z-20 pointer-events-none group-hover:pointer-events-auto">
                    {/* Cyberpunk circuit / grid background */}
                    <div className="absolute inset-0 opacity-20 pointer-events-none"
                      style={{
@@ -127,19 +127,18 @@ export function AboutSection() {
                      }}
                    />
                    
-                   <h3 className="font-bebas text-3xl text-white tracking-widest mb-8 drop-shadow-[0_0_10px_#ff2d2d] z-10">
+                   <h3 className="font-bebas text-3xl text-white tracking-widest mb-8 drop-shadow-[0_0_10px_#ff2d2d] z-30">
                      COMM LINKS
                    </h3>
                    
-                   <div className="flex flex-col gap-4 w-full z-10">
+                   <div className="flex flex-col gap-5 w-full z-30">
                       {[
                         { name: 'GITHUB', icon: Terminal, url: 'https://github.com/arnav-kushwaha01', hoverBg: 'hover:bg-neutral-800' },
                         { name: 'LINKEDIN', icon: Briefcase, url: 'https://linkedin.com/in/arnavkushwaha', hoverBg: 'hover:bg-blue-600' },
-                        { name: 'TWITTER / X', icon: Globe, url: 'https://twitter.com/arnavkushwaha', hoverBg: 'hover:bg-neutral-900' },
                         { name: 'EMAIL', icon: Mail, url: 'mailto:contact@arnavkushwaha.com', hoverBg: 'hover:bg-manga-red' }
                       ].map((social, idx) => (
                         <a key={idx} href={social.url} target="_blank" rel="noopener noreferrer" 
-                           className={`group/btn relative flex items-center justify-between px-4 py-3 border-2 border-white bg-black transition-all duration-300 ${social.hoverBg} hover:scale-105 hover:-translate-y-1 shadow-[2px_2px_0px_#ff2d2d] hover:shadow-[4px_4px_0px_#ffffff]`}
+                           className={`group/btn relative flex items-center justify-between px-4 py-3 border-2 border-white bg-black transition-all duration-300 ${social.hoverBg} hover:scale-105 hover:-translate-y-1 shadow-[2px_2px_0px_#ff2d2d] hover:shadow-[4px_4px_0px_#ffffff] cursor-pointer`}
                         >
                           <span className="font-bebas text-lg tracking-wider text-manga-gray-light group-hover/btn:text-white transition-colors">
                             {social.name}
