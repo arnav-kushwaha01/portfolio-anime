@@ -1,152 +1,213 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 
 interface LoadingScreenProps {
   onComplete?: () => void
 }
 
 export function LoadingScreen({ onComplete }: LoadingScreenProps) {
-  const [progress, setProgress] = useState(0)
-  // Store onComplete in a ref so we always call the latest version
-  // without needing it in a useEffect dependency array
+  const [isReady, setIsReady] = useState(false)
+  const [isFlashing, setIsFlashing] = useState(false)
+  const [hatchOpen, setHatchOpen] = useState(false)
+  
+  // Store onComplete in a ref
   const onCompleteRef = useRef(onComplete)
   useEffect(() => {
     onCompleteRef.current = onComplete
   }, [onComplete])
 
-  // Smooth progress calculation
+  // Automated Timeline Sequence
   useEffect(() => {
-    const startTime = Date.now()
-    const duration = 2400 // 2.4 seconds load
-    
-    const timer = setInterval(() => {
-      const elapsed = Date.now() - startTime
-      const pct = Math.min((elapsed / duration) * 100, 100)
-      
-      setProgress(Math.floor(pct))
-      
-      if (pct >= 100) {
-        clearInterval(timer)
-      }
-    }, 25)
+    // 1. Start drop animation immediately
+    setIsReady(true)
 
-    return () => clearInterval(timer)
-  }, [])
+    // 2. Open the hatch automatically after the drop settles
+    const hatchTimer = setTimeout(() => {
+      setHatchOpen(true)
+    }, 1800)
 
-  // Fire onComplete once when progress reaches 100
-  useEffect(() => {
-    if (progress === 100) {
-      const timeout = setTimeout(() => {
-        onCompleteRef.current?.()
-      }, 600)
-      return () => clearTimeout(timeout)
+    // 3. Trigger the blinding flash shortly after hatch opens
+    const flashTimer = setTimeout(() => {
+      setIsFlashing(true)
+    }, 2400)
+
+    // 4. Reveal the website after flash covers the screen
+    const completeTimer = setTimeout(() => {
+      onCompleteRef.current?.()
+    }, 3000)
+
+    return () => {
+      clearTimeout(hatchTimer)
+      clearTimeout(flashTimer)
+      clearTimeout(completeTimer)
     }
-  }, [progress]) // Only depends on progress, not the callback
-
-  // Manga editing processes
-  const EDITING_STEPS = [
-    { id: 1, text: 'CREATING SKETCH OUTLINES...', threshold: 25 },
-    { id: 2, text: 'INKING STORY PANELS...', threshold: 55 },
-    { id: 3, text: 'APPLYING SCREEN TONE DOTS...', threshold: 85 },
-    { id: 4, text: 'VOLUME READY FOR RELEASE!', threshold: 100 },
-  ]
+  }, [])
 
   return (
     <motion.div
       initial={{ opacity: 1 }}
-      exit={{
-        opacity: 0,
-        scale: 1.05,
-        filter: 'blur(10px)',
-        transition: { duration: 0.6, ease: 'easeInOut' },
-      }}
-      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black select-none overflow-hidden halftone-bg"
+      exit={{ opacity: 0, transition: { duration: 0.8 } }}
+      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#020202] overflow-hidden select-none"
     >
-      {/* Dynamic Background Speedlines */}
-      <div className="absolute inset-0 speed-lines-bg opacity-40 pointer-events-none" />
+      {/* Background Deep Space Starfield */}
+      <div className="absolute inset-0 pointer-events-none opacity-50" 
+        style={{
+          backgroundImage: 'radial-gradient(circle at center, #ffffff 1px, transparent 1px)',
+          backgroundSize: '60px 60px'
+        }}
+      />
+      <div className="absolute inset-0 pointer-events-none opacity-20" 
+        style={{
+          backgroundImage: 'radial-gradient(circle at center, #ff2d2d 1px, transparent 1px)',
+          backgroundSize: '120px 120px',
+          backgroundPosition: '30px 30px'
+        }}
+      />
 
-      {/* Decorative Ink Splat Vector - Left */}
-      <div className="absolute -left-10 -top-10 w-48 h-48 opacity-10 pointer-events-none">
-        <svg viewBox="0 0 100 100" fill="white">
-          <path d="M50 0 C60 20, 80 10, 80 40 C80 60, 60 70, 50 100 C30 80, 10 90, 10 50 C10 10, 30 20, 50 0 Z" />
-        </svg>
-      </div>
-
-      {/* Decorative Ink Splat Vector - Right */}
-      <div className="absolute -right-20 -bottom-20 w-80 h-80 opacity-10 pointer-events-none">
-        <svg viewBox="0 0 100 100" fill="white">
-          <path d="M50 0 C70 30, 90 20, 100 60 C80 90, 70 80, 40 100 C10 80, 0 60, 20 40 C40 20, 30 0, 50 0 Z" />
-        </svg>
-      </div>
-
-      {/* Manga Page Frame Border */}
-      <div className="absolute inset-4 md:inset-8 border-4 border-white pointer-events-none z-10 shadow-[inset_0_0_0_2px_#000000]" />
-
-      <div className="relative z-20 flex flex-col items-center max-w-md px-6 text-center">
-        {/* Manga Title Logo layout */}
-        <div className="mb-4">
-          <div className="inline-block bg-manga-red border-2 border-white px-4 py-1.5 text-black font-bebas text-lg md:text-xl tracking-widest skew-x-[-6deg] shadow-[3px_3px_0px_#fff]">
-            SERIES DEBUT
-          </div>
-        </div>
-
-        <h1 className="font-bebas text-5xl md:text-7xl text-white tracking-wide leading-none mb-1">
-          ARNAV KUSHWAHA
-        </h1>
-        <p className="font-grotesk text-xs md:text-sm tracking-[0.2em] text-manga-gray-light uppercase mb-10">
-          — VOL. 01: THE PORTFOLIO ACT —
-        </p>
-
-        {/* Large Comic-Style Percentage Count */}
-        <div className="relative mb-8">
-          <div className="font-bebas text-8xl md:text-9xl text-white tracking-tighter leading-none select-none drop-shadow-[5px_5px_0px_#ff2d2d] skew-x-[-4deg]">
-            {progress.toString().padStart(3, '0')}%
-          </div>
-        </div>
-
-        {/* Process Log panel */}
-        <div className="w-full max-w-xs bg-manga-gray-dark border-2 border-white p-4 shadow-[4px_4px_0px_#ff2d2d] skew-x-[-1deg] mb-6">
-          <div className="flex flex-col gap-2.5 font-grotesk text-[10px] md:text-xs text-left">
-            {EDITING_STEPS.map((step, idx) => {
-              const isCompleted = progress >= step.threshold
-              const prevThreshold = idx === 0 ? 0 : EDITING_STEPS[idx - 1].threshold
-              const isActive = progress >= prevThreshold && progress < step.threshold
-
-              let indicator = '○'
-              let textColor = 'text-manga-gray-light opacity-50'
-
-              if (isCompleted) {
-                indicator = '●'
-                textColor = 'text-white font-bold'
-              } else if (isActive) {
-                indicator = '▶'
-                textColor = 'text-manga-red font-bold animate-pulse'
-              }
-
-              return (
-                <div key={step.id} className={`flex items-center gap-3 transition-colors duration-150 ${textColor}`}>
-                  <span className="shrink-0">{indicator}</span>
-                  <span className="tracking-wider">{step.text}</span>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-
-        {/* Thick Comic Border Progress Bar */}
-        <div className="w-64 h-5 border-2 border-white bg-black overflow-hidden relative skew-x-[-6deg]">
-          <div
-            className="h-full bg-manga-red border-r-2 border-white transition-all duration-100"
-            style={{ width: `${progress}%` }}
+      {/* Flashing White Overlay (Automated) */}
+      <AnimatePresence>
+        {isFlashing && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.1 }}
+            animate={{ opacity: 1, scale: 30 }}
+            className="absolute z-50 w-64 h-64 bg-white rounded-full pointer-events-none"
+            transition={{ duration: 0.5, ease: "easeIn" }}
           />
-        </div>
-        
-        <span className="font-bebas text-xs tracking-widest text-manga-gray-light mt-3 block">
-          MANGA LOADER ACTIVE
-        </span>
-      </div>
+        )}
+      </AnimatePresence>
+
+      {/* Massive Battleship Container */}
+      {isReady && (
+        <motion.div
+          initial={{ y: '-100vh', scale: 1.5 }}
+          animate={{ y: '-10vh', scale: 1 }}
+          transition={{ 
+            type: 'spring', 
+            damping: 18, 
+            stiffness: 70, 
+            duration: 2
+          }}
+          className="relative w-full max-w-5xl aspect-video flex items-center justify-center z-20"
+        >
+          {/* Hovering idle animation applied to wrapper */}
+          <motion.div
+            animate={{ y: [-5, 5, -5] }}
+            transition={{ repeat: Infinity, duration: 6, ease: "easeInOut" }}
+            className="relative w-full h-full flex items-center justify-center mt-32"
+          >
+            {/* MASSIVE BATTLESHIP VECTOR */}
+            <svg viewBox="0 0 1000 600" className="w-full h-full drop-shadow-[0_15px_30px_rgba(255,45,45,0.15)]">
+              {/* Massive Main Thrusters */}
+              <motion.path 
+                animate={{ scaleY: [1, 1.3, 1], opacity: [0.8, 1, 0.8] }}
+                transition={{ repeat: Infinity, duration: 0.15 }}
+                style={{ originY: 0.5 }}
+                d="M350 450 L400 580 L450 450 Z" 
+                fill="#ff2d2d" 
+              />
+              <motion.path 
+                animate={{ scaleY: [1, 1.3, 1], opacity: [0.8, 1, 0.8] }}
+                transition={{ repeat: Infinity, duration: 0.15, delay: 0.05 }}
+                style={{ originY: 0.5 }}
+                d="M550 450 L600 580 L650 450 Z" 
+                fill="#ff2d2d" 
+              />
+              
+              {/* Inner White Hot Thruster Cores */}
+              <motion.path 
+                animate={{ scaleY: [1, 1.1, 1] }}
+                transition={{ repeat: Infinity, duration: 0.1 }}
+                style={{ originY: 0.5 }}
+                d="M370 450 L400 530 L430 450 Z" fill="#ffffff" 
+              />
+              <motion.path 
+                animate={{ scaleY: [1, 1.1, 1] }}
+                transition={{ repeat: Infinity, duration: 0.1, delay: 0.05 }}
+                style={{ originY: 0.5 }}
+                d="M570 450 L600 530 L630 450 Z" fill="#ffffff" 
+              />
+
+              {/* Broad Sweeping Wings / Armor Plating */}
+              <path d="M500 50 L100 350 L100 450 L350 450 L350 300 Z" fill="#0c0c0c" stroke="#333" strokeWidth="4" />
+              <path d="M500 50 L900 350 L900 450 L650 450 L650 300 Z" fill="#0c0c0c" stroke="#333" strokeWidth="4" />
+              
+              {/* Main Central Dreadnought Hull */}
+              <path d="M500 20 L400 150 L400 500 L600 500 L600 150 Z" fill="#151515" stroke="#444" strokeWidth="5" />
+              <path d="M500 20 L450 150 L450 450 L550 450 L550 150 Z" fill="#0a0a0a" />
+              
+              {/* Giant Red Front Armor Wedge */}
+              <path d="M500 20 L420 200 L580 200 Z" fill="#ff2d2d" opacity="0.8" />
+              
+              {/* Gun Batteries (Left/Right) */}
+              <rect x="150" y="380" width="20" height="120" fill="#222" stroke="#ff2d2d" strokeWidth="2" />
+              <rect x="250" y="390" width="30" height="150" fill="#111" stroke="#ff2d2d" strokeWidth="2" />
+              
+              <rect x="830" y="380" width="20" height="120" fill="#222" stroke="#ff2d2d" strokeWidth="2" />
+              <rect x="720" y="390" width="30" height="150" fill="#111" stroke="#ff2d2d" strokeWidth="2" />
+
+              {/* Cyber-Grid Detail Lines */}
+              <line x1="450" y1="250" x2="550" y2="250" stroke="#ff2d2d" strokeWidth="2" opacity="0.5" />
+              <line x1="430" y1="300" x2="570" y2="300" stroke="#ff2d2d" strokeWidth="2" opacity="0.5" />
+              <line x1="410" y1="350" x2="590" y2="350" stroke="#ff2d2d" strokeWidth="2" opacity="0.5" />
+
+              {/* Central Hatch Bay Frame */}
+              <circle cx="500" cy="380" r="80" fill="#000" stroke="#333" strokeWidth="6" />
+              
+              {/* The Mechanical Hatch Doors */}
+              <g style={{ transformOrigin: "500px 380px" }}>
+                <motion.path 
+                  initial={{ x: 0 }}
+                  animate={{ x: hatchOpen ? -80 : 0 }}
+                  transition={{ type: "spring", damping: 20, stiffness: 60 }}
+                  d="M500 300 A 80 80 0 0 0 500 460 Z" 
+                  fill="#1a1a1a" stroke="#ff2d2d" strokeWidth="3" 
+                />
+                <motion.path 
+                  initial={{ x: 0 }}
+                  animate={{ x: hatchOpen ? 80 : 0 }}
+                  transition={{ type: "spring", damping: 20, stiffness: 60 }}
+                  d="M500 300 A 80 80 0 0 1 500 460 Z" 
+                  fill="#1a1a1a" stroke="#ff2d2d" strokeWidth="3" 
+                />
+              </g>
+
+              {/* The Blinding Core Inside the Hatch (Revealed when open) */}
+              <motion.circle 
+                cx="500" cy="380" r="50" 
+                fill="#ffffff" 
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ 
+                  opacity: hatchOpen ? 1 : 0, 
+                  scale: hatchOpen ? [1, 1.2, 1] : 0.5 
+                }}
+                transition={{ 
+                  scale: { repeat: Infinity, duration: 0.1 },
+                  opacity: { duration: 0.2 }
+                }}
+                style={{ filter: "drop-shadow(0 0 30px #ffffff)" }}
+              />
+            </svg>
+
+          </motion.div>
+        </motion.div>
+      )}
+
+      {/* Cinematic Text Tracker */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1, duration: 0.8 }}
+        className="absolute bottom-16 text-center z-10"
+      >
+        <p className="font-bebas text-manga-red tracking-[0.5em] text-xl animate-pulse drop-shadow-[0_0_10px_#ff2d2d]">
+          INTERACTIVE RESUME
+        </p>
+        <p className="font-grotesk text-manga-gray-light tracking-[0.3em] text-xs mt-2 opacity-60">
+          INITIATING DEPLOYMENT SEQUENCE...
+        </p>
+      </motion.div>
     </motion.div>
   )
 }

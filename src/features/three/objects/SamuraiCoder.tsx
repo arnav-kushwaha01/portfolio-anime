@@ -64,32 +64,80 @@ export function SamuraiCoder({ position = [0, 0, 0], scale = 1.0 }: SamuraiCoder
   const text3Ref = useRef<TroikaTextMesh>(null)
   const textRefs = [text1Ref, text2Ref, text3Ref]
 
-  // Listen to screen clicks for manual slash trigger
+  // Custom Trackball Rotation & Slash Logic
   useEffect(() => {
-    const handleScreenClick = () => {
-      setIsSlashing(true)
+    let isDragging = false
+    let previousMousePosition = { x: 0, y: 0 }
+    let dragStartPos = { x: 0, y: 0 }
 
-      codeTargets.forEach((target) => {
-        if (target.x > 0.0 && target.x < 3.2 && !target.slashed) {
-          target.slashed = true
-        }
-      })
-
-      setTimeout(() => {
-        setIsSlashing(false)
-      }, 350)
+    const handlePointerDown = (e: MouseEvent) => {
+      isDragging = true
+      previousMousePosition = { x: e.clientX, y: e.clientY }
+      dragStartPos = { x: e.clientX, y: e.clientY }
     }
 
-    window.addEventListener('click', handleScreenClick)
-    return () => window.removeEventListener('click', handleScreenClick)
+    const handlePointerUp = (e: MouseEvent) => {
+      isDragging = false
+      
+      // Calculate how far the mouse moved
+      const dist = Math.hypot(e.clientX - dragStartPos.x, e.clientY - dragStartPos.y)
+      
+      // If they barely moved the mouse, count it as a CLICK (trigger slash)
+      if (dist < 10) {
+        setIsSlashing(true)
+
+        codeTargets.forEach((target) => {
+          if (target.x > 0.0 && target.x < 3.2 && !target.slashed) {
+            target.slashed = true
+          }
+        })
+
+        setTimeout(() => {
+          setIsSlashing(false)
+        }, 350)
+      }
+    }
+
+    const handlePointerMove = (e: MouseEvent) => {
+      if (isDragging && groupRef.current) {
+        const deltaMove = {
+          x: e.clientX - previousMousePosition.x,
+          y: e.clientY - previousMousePosition.y
+        }
+
+        // Apply a quaternion rotation for free 360-degree trackball rotation (X, Y, and Z planes)
+        const rotationQuaternion = new THREE.Quaternion()
+          .setFromEuler(new THREE.Euler(
+            deltaMove.y * 0.008, // Rotate around X
+            deltaMove.x * 0.008, // Rotate around Y
+            0,
+            'XYZ'
+          ))
+        
+        // Multiply the new rotation onto the current rotation
+        groupRef.current.quaternion.premultiply(rotationQuaternion)
+
+        previousMousePosition = { x: e.clientX, y: e.clientY }
+      }
+    }
+
+    window.addEventListener('mousedown', handlePointerDown)
+    window.addEventListener('mouseup', handlePointerUp)
+    window.addEventListener('mousemove', handlePointerMove)
+
+    return () => {
+      window.removeEventListener('mousedown', handlePointerDown)
+      window.removeEventListener('mouseup', handlePointerUp)
+      window.removeEventListener('mousemove', handlePointerMove)
+    }
   }, [codeTargets])
 
   useFrame((state, delta) => {
     const t = state.clock.getElapsedTime()
 
-    // 1. Overall floating bobbing
-    if (groupRef.current) {
-      groupRef.current.position.y = position[1] + Math.sin(t * 1.5) * 0.05
+    // 1. Overall floating bobbing (we add a tiny bobbing motion to the inner body so we don't overwrite the user's manual trackball rotation on groupRef)
+    if (bodyGroupRef.current) {
+      bodyGroupRef.current.position.y = Math.sin(t * 1.5) * 0.05 - 0.3
     }
 
     // 2. Ribbon wind flutter
@@ -133,29 +181,34 @@ export function SamuraiCoder({ position = [0, 0, 0], scale = 1.0 }: SamuraiCoder
         const progress = Math.sin(t * 22) * 0.7 + 0.4
         const slashType = slashTypeRef.current
 
-        // Lunge forward
-        bodyGroupRef.current.position.x = THREE.MathUtils.lerp(bodyGroupRef.current.position.x, 0.35, 0.25)
-        bodyGroupRef.current.position.y = THREE.MathUtils.lerp(bodyGroupRef.current.position.y, -0.42, 0.25)
-        bodyGroupRef.current.position.z = THREE.MathUtils.lerp(bodyGroupRef.current.position.z, 0.2, 0.25)
+        // Lunge forward with a grounded stance
+        bodyGroupRef.current.position.x = THREE.MathUtils.lerp(bodyGroupRef.current.position.x, 0.2, 0.3)
+        bodyGroupRef.current.position.z = THREE.MathUtils.lerp(bodyGroupRef.current.position.z, 0.25, 0.3)
+        bodyGroupRef.current.position.y = THREE.MathUtils.lerp(bodyGroupRef.current.position.y, -0.35, 0.3)
 
-        // Knee bend
-        leftLegRef.current.rotation.x = THREE.MathUtils.lerp(leftLegRef.current.rotation.x, -Math.PI / 4.5, 0.25)
-        rightLegRef.current.rotation.x = THREE.MathUtils.lerp(rightLegRef.current.rotation.x, Math.PI / 10, 0.25)
+        // Knee bend (realistic wide fighting stance)
+        leftLegRef.current.rotation.x = THREE.MathUtils.lerp(leftLegRef.current.rotation.x, -Math.PI / 12, 0.3)
+        rightLegRef.current.rotation.x = THREE.MathUtils.lerp(rightLegRef.current.rotation.x, Math.PI / 15, 0.3)
 
-        // Head tilt
-        headGroupRef.current.rotation.x = THREE.MathUtils.lerp(headGroupRef.current.rotation.x, Math.PI / 8, 0.25)
-        headGroupRef.current.rotation.y = THREE.MathUtils.lerp(headGroupRef.current.rotation.y, Math.PI / 12, 0.25)
+        // Head tilt (keep eyes locked on target, minimal wild movement)
+        headGroupRef.current.rotation.x = THREE.MathUtils.lerp(headGroupRef.current.rotation.x, Math.PI / 15, 0.3)
+        headGroupRef.current.rotation.y = THREE.MathUtils.lerp(headGroupRef.current.rotation.y, Math.PI / 20, 0.3)
 
-        // Arm swing & torso twist
+        // Left arm counter-balance (swings back for stability)
+        leftArmRef.current.rotation.x = THREE.MathUtils.lerp(leftArmRef.current.rotation.x, -Math.PI / 6, 0.3)
+        leftArmRef.current.rotation.z = THREE.MathUtils.lerp(leftArmRef.current.rotation.z, Math.PI / 15, 0.3)
+
+        // Arm swing & torso twist (reduced max angle to prevent meshes disconnecting)
         if (slashType === 0) {
-          torsoGroupRef.current.rotation.x = THREE.MathUtils.lerp(torsoGroupRef.current.rotation.x, Math.PI / 8, 0.25)
-          torsoGroupRef.current.rotation.y = THREE.MathUtils.lerp(torsoGroupRef.current.rotation.y, -Math.PI / 5, 0.25)
+          // Downward diagonal strike
+          torsoGroupRef.current.rotation.x = THREE.MathUtils.lerp(torsoGroupRef.current.rotation.x, Math.PI / 12, 0.3) 
+          torsoGroupRef.current.rotation.y = THREE.MathUtils.lerp(torsoGroupRef.current.rotation.y, -Math.PI / 12, 0.3) 
 
-          rightArmRef.current.rotation.x = THREE.MathUtils.lerp(rightArmRef.current.rotation.x, Math.PI / 2.5 + progress, 0.45)
-          rightArmRef.current.rotation.y = THREE.MathUtils.lerp(rightArmRef.current.rotation.y, Math.PI / 4, 0.45)
-          rightArmRef.current.rotation.z = THREE.MathUtils.lerp(rightArmRef.current.rotation.z, -Math.PI / 6, 0.45)
+          rightArmRef.current.rotation.x = THREE.MathUtils.lerp(rightArmRef.current.rotation.x, Math.PI / 3 + progress * 0.4, 0.4)
+          rightArmRef.current.rotation.y = THREE.MathUtils.lerp(rightArmRef.current.rotation.y, Math.PI / 8, 0.4)
+          rightArmRef.current.rotation.z = THREE.MathUtils.lerp(rightArmRef.current.rotation.z, -Math.PI / 12, 0.4)
           
-          swordRef.current.rotation.x = THREE.MathUtils.lerp(swordRef.current.rotation.x, -Math.PI / 3, 0.45)
+          swordRef.current.rotation.x = THREE.MathUtils.lerp(swordRef.current.rotation.x, -Math.PI / 4, 0.4)
 
           if (slashEffectRef.current) {
             slashEffectRef.current.rotation.set(0.1, -Math.PI / 4, Math.PI / 5)
@@ -163,15 +216,16 @@ export function SamuraiCoder({ position = [0, 0, 0], scale = 1.0 }: SamuraiCoder
           }
         } 
         else if (slashType === 1) {
-          torsoGroupRef.current.rotation.x = THREE.MathUtils.lerp(torsoGroupRef.current.rotation.x, Math.PI / 15, 0.25)
-          torsoGroupRef.current.rotation.y = THREE.MathUtils.lerp(torsoGroupRef.current.rotation.y, -Math.PI / 3.2, 0.25)
+          // Horizontal side slash
+          torsoGroupRef.current.rotation.x = THREE.MathUtils.lerp(torsoGroupRef.current.rotation.x, Math.PI / 15, 0.3)
+          torsoGroupRef.current.rotation.y = THREE.MathUtils.lerp(torsoGroupRef.current.rotation.y, Math.PI / 15, 0.3)
 
-          rightArmRef.current.rotation.x = THREE.MathUtils.lerp(rightArmRef.current.rotation.x, Math.PI / 6, 0.45)
-          rightArmRef.current.rotation.y = THREE.MathUtils.lerp(rightArmRef.current.rotation.y, -Math.PI / 1.6 - progress * 0.8, 0.45)
-          rightArmRef.current.rotation.z = THREE.MathUtils.lerp(rightArmRef.current.rotation.z, -Math.PI / 12, 0.45)
+          rightArmRef.current.rotation.x = THREE.MathUtils.lerp(rightArmRef.current.rotation.x, Math.PI / 8, 0.4)
+          rightArmRef.current.rotation.y = THREE.MathUtils.lerp(rightArmRef.current.rotation.y, -Math.PI / 3 - progress * 0.5, 0.4)
+          rightArmRef.current.rotation.z = THREE.MathUtils.lerp(rightArmRef.current.rotation.z, 0, 0.4)
           
-          swordRef.current.rotation.x = THREE.MathUtils.lerp(swordRef.current.rotation.x, Math.PI / 4, 0.45)
-          swordRef.current.rotation.y = THREE.MathUtils.lerp(swordRef.current.rotation.y, -Math.PI / 4, 0.45)
+          swordRef.current.rotation.x = THREE.MathUtils.lerp(swordRef.current.rotation.x, Math.PI / 3, 0.4)
+          swordRef.current.rotation.y = THREE.MathUtils.lerp(swordRef.current.rotation.y, -Math.PI / 4, 0.4)
 
           if (slashEffectRef.current) {
             slashEffectRef.current.rotation.set(Math.PI / 2.2, -Math.PI / 6, 0)
@@ -179,15 +233,16 @@ export function SamuraiCoder({ position = [0, 0, 0], scale = 1.0 }: SamuraiCoder
           }
         } 
         else {
-          torsoGroupRef.current.rotation.x = THREE.MathUtils.lerp(torsoGroupRef.current.rotation.x, -Math.PI / 15, 0.25)
-          torsoGroupRef.current.rotation.y = THREE.MathUtils.lerp(torsoGroupRef.current.rotation.y, -Math.PI / 4, 0.25)
+          // Upward rising slash
+          torsoGroupRef.current.rotation.x = THREE.MathUtils.lerp(torsoGroupRef.current.rotation.x, -Math.PI / 20, 0.3)
+          torsoGroupRef.current.rotation.y = THREE.MathUtils.lerp(torsoGroupRef.current.rotation.y, -Math.PI / 12, 0.3)
 
-          rightArmRef.current.rotation.x = THREE.MathUtils.lerp(rightArmRef.current.rotation.x, -Math.PI / 2.2 + progress * 0.5, 0.45)
-          rightArmRef.current.rotation.y = THREE.MathUtils.lerp(rightArmRef.current.rotation.y, Math.PI / 5, 0.45)
-          rightArmRef.current.rotation.z = THREE.MathUtils.lerp(rightArmRef.current.rotation.z, -Math.PI / 8, 0.45)
+          rightArmRef.current.rotation.x = THREE.MathUtils.lerp(rightArmRef.current.rotation.x, -Math.PI / 4 + progress * 0.6, 0.4)
+          rightArmRef.current.rotation.y = THREE.MathUtils.lerp(rightArmRef.current.rotation.y, Math.PI / 6, 0.4)
+          rightArmRef.current.rotation.z = THREE.MathUtils.lerp(rightArmRef.current.rotation.z, -Math.PI / 12, 0.4)
           
-          swordRef.current.rotation.x = THREE.MathUtils.lerp(swordRef.current.rotation.x, -Math.PI / 2, 0.45)
-          swordRef.current.rotation.y = THREE.MathUtils.lerp(swordRef.current.rotation.y, Math.PI / 6, 0.45)
+          swordRef.current.rotation.x = THREE.MathUtils.lerp(swordRef.current.rotation.x, -Math.PI / 2.5, 0.4)
+          swordRef.current.rotation.y = THREE.MathUtils.lerp(swordRef.current.rotation.y, Math.PI / 8, 0.4)
 
           if (slashEffectRef.current) {
             slashEffectRef.current.rotation.set(-0.2, -Math.PI / 4, -Math.PI / 4)
@@ -206,7 +261,6 @@ export function SamuraiCoder({ position = [0, 0, 0], scale = 1.0 }: SamuraiCoder
       } else {
         // REVERT TO NEUTRAL POSTURE
         bodyGroupRef.current.position.x = THREE.MathUtils.lerp(bodyGroupRef.current.position.x, 0, 0.1)
-        bodyGroupRef.current.position.y = THREE.MathUtils.lerp(bodyGroupRef.current.position.y, -0.3, 0.1)
         bodyGroupRef.current.position.z = THREE.MathUtils.lerp(bodyGroupRef.current.position.z, 0, 0.1)
 
         leftLegRef.current.rotation.x = THREE.MathUtils.lerp(leftLegRef.current.rotation.x, 0, 0.1)
@@ -320,6 +374,13 @@ export function SamuraiCoder({ position = [0, 0, 0], scale = 1.0 }: SamuraiCoder
     })
   })
 
+  // Initial setup: ensure the groupRef starts with a slight angle (it used to be hardcoded in the bodyGroupRef)
+  useEffect(() => {
+    if (groupRef.current) {
+      groupRef.current.rotation.y = -Math.PI / 6
+    }
+  }, [])
+
   return (
     <group ref={groupRef} position={position} scale={[scale, scale, scale]}>
       
@@ -329,8 +390,8 @@ export function SamuraiCoder({ position = [0, 0, 0], scale = 1.0 }: SamuraiCoder
         <meshBasicMaterial color="#ff2d2d" transparent opacity={0} blending={THREE.AdditiveBlending} side={THREE.DoubleSide} />
       </mesh>
 
-      {/* SAMURAI 3D MODEL ASSEMBLY */}
-      <group ref={bodyGroupRef} position={[0, -0.3, 0]} rotation={[0, -Math.PI / 6, 0]}>
+      {/* SAMURAI 3D MODEL ASSEMBLY WITH PROCEDURAL JOINTS */}
+      <group ref={bodyGroupRef} position={[0, -0.3, 0]}>
         
         {/* Torso Group */}
         <group ref={torsoGroupRef}>
